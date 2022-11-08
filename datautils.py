@@ -9,6 +9,32 @@ from utils import pkl_load, pad_nan_to_target
 from scipy.io.arff import loadarff
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
+
+def load_ECG():
+    # train_file = os.path.join('datasets/UCR', dataset, dataset + "_TRAIN.tsv")
+    # test_file = os.path.join('datasets/UCR', dataset, dataset + "_TEST.tsv")
+    # train_df = pd.read_csv("/Users/abuj/Documents/GitHub/CFT/datasets/ECG200/ECG200_TRAIN.txt", sep='\t', header=None,  on_bad_lines='skip')
+    # test_df = pd.read_csv("/Users/abuj/Documents/GitHub/CFT/datasets/ECG200/ECG200_TEST.txt", sep='\t', header=None, on_bad_lines='skip')
+    
+    train_array = np.loadtxt("/Users/abuj/Documents/GitHub/CFT/datasets/ECG200/ECG200_TRAIN.txt") #np.array(train_df)
+    test_array  = np.loadtxt("/Users/abuj/Documents/GitHub/CFT/datasets/ECG200/ECG200_TEST.txt") #np.array(test_df)
+
+    # Move the labels to {0, ..., L-1}
+    labels = np.unique(train_array[:, 0])
+    transform = {}
+    for i, l in enumerate(labels):
+        transform[l] = i
+
+    train = train_array[:, 1:].astype(np.float64)
+    train_labels = np.vectorize(transform.get)(train_array[:, 0])
+    test = test_array[:, 1:].astype(np.float64)
+    test_labels = np.vectorize(transform.get)(test_array[:, 0])
+
+    return train[..., np.newaxis], train_labels, test[..., np.newaxis], test_labels
+    
+
+
+
 def load_UCR(dataset):
     train_file = os.path.join('datasets/UCR', dataset, dataset + "_TRAIN.tsv")
     test_file = os.path.join('datasets/UCR', dataset, dataset + "_TEST.tsv")

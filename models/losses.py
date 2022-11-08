@@ -48,3 +48,97 @@ def temporal_contrastive_loss(z1, z2):
     t = torch.arange(T, device=z1.device)
     loss = (logits[:, t, T + t - 1].mean() + logits[:, T + t, t].mean()) / 2
     return loss
+
+
+
+def quadratic_contrastive_loss(z1, f1, delta=0.01):
+    '''
+        z1 is a batch containing the representations from the dilated conv net
+        f1 is a batch containing the expert features 
+    '''
+    loss     = torch.tensor(0., device=z1.device)
+    B, T     = z1.size(0), z1.size(1)
+    max_diff = get_max_norm(f1)
+    dij_mu   = get_euclidean_mean(z1)
+
+    for i in range(B):  
+        xi   = z1[i]
+        for j in range(i+1, B): 
+            xj  = z1[j]
+            sij = similarity_measure(xi, xj, max_diff)
+            dij = torch.norm(xi - xj) / dij_mu
+            loss += ( (1-sij)*delta - dij ) ** 2
+
+    loss /= B**2
+
+    return loss
+
+
+def expclr_loss(z1, f1, temp=0.5, delta=0.01):
+    '''
+        z1 is a batch containing the representations from the dilated conv net
+        f1 is a batch containing the expert features 
+    '''
+    loss     = torch.tensor(0., device=z1.device)
+    B, T     = z1.size(0), z1.size(1)
+    max_diff = get_max_norm(f1)
+    dij_mu   = get_euclidean_mean(z1)
+
+    for i in range(B):  
+        xi   = z1[i]
+        for j in range(i+1, B): 
+            xj  = z1[j]
+            sij = similarity_measure(xi, xj, max_diff)
+            dij = torch.norm(xi - xj)/dij_mu
+
+            lij = ( (1-sij)*delta - dij ) ** 2 
+            lij /= temp
+            lij = torch.exp(lij)
+            lij /= B**2
+
+            loss += lij
+    loss = temp * torch.log( loss )
+    return loss
+    
+
+def get_euclidean_mean(z1):
+    mean     = torch.tensor(0., device=z1.device)
+    B, T     = z1.size(0), z1.size(1)
+
+    for i in range(B):  
+        xi   = z1[i]
+        for j in range(i+1, B): 
+            xj  = z1[j]
+            dij = torch.norm(xi - xj)
+            mean += dij
+    mean /= B
+    return mean
+
+def similarity_measure(z1, z2, max_diff, type='square', sigma=0.01):
+    sij = 1 - ( torch.norm(z1 - z2)  / max_diff)
+    if type=='square':
+        return sij ** 2
+    elif type=='exp':
+        # TODO
+        pass 
+    else:
+        return sij
+
+
+def get_max_norm(f1):
+    '''
+        f1 is a batch containing the expert features 
+    '''
+    max_diff =  torch.tensor(0., device=f1.device)
+
+    # TODO: Max more efficient
+
+    for i in range( len(f1) ):
+        for j in range( i+1, len(f1) ):
+            if i == j: continue
+            diff = f1[i] - f1[j]
+            norm_diff = torch.norm(diff) 
+            if max_diff < norm_diff:
+                max_diff = norm_diff
+
+    return max_diff
