@@ -175,8 +175,7 @@ class TS2Vec:
                     out2,
                     temporal_unit=self.temporal_unit
                 )
-
-
+                # loss = torch.tensor(0., device=out1.device)
 
                 if expert_features is not None:
                     _, (out1, _)  = self._rnn(out1) 
@@ -185,8 +184,8 @@ class TS2Vec:
                     out1 = out1.squeeze(0) #out1.view(out1.shape[1:])
                     out2 = out2.squeeze(0) #out2.view(out2.shape[1:])
 
-                    l1 = quadratic_contrastive_loss(out1, expf,) # expclr_loss(out1, expf, temp=temperature, delta=delta) #
-                    l2 = quadratic_contrastive_loss(out2, expf,) # expclr_loss(out2, expf, temp=temperature, delta=delta) #
+                    l1 = quadratic_contrastive_loss(out1, expf, delta=2) # expclr_loss(out1, expf, temp=temperature, delta=delta) #
+                    l2 = quadratic_contrastive_loss(out2, expf, delta=2) # expclr_loss(out2, expf, temp=temperature, delta=delta) #
                     # print(l1, l2)
                     loss += l1 + l2
                     
