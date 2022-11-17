@@ -64,7 +64,7 @@ def quadratic_contrastive_loss(z1, f1, delta=0.1, type_sim='square'):
     for i in range(B):  
         xi   = z1[i]
         fi   = f1[i]
-        for j in range(i+1, B): # TODO: confirm if algo is meant to iterate B**2 times and if norm(xi - xj) == norm (xj - xi)
+        for j in range(B): # TODO: confirm if algo is meant to iterate B**2 times and if norm(xi - xj) == norm (xj - xi)
             xj   = z1[j]
             fj   = f1[j]
             loss += get_quad_loss_helper(xi, xj, fi, fj, dij_mu[i], max_diff_norm_of_feat, delta, type_sim)
