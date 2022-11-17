@@ -15,6 +15,7 @@ import pandas as pd
 def get_frac_diff_series(df, alpha_column, coef_d=0.25, plot=False):
 
     # TODO: Add functionality for deriving optimal differentiation
+    # TODO: Use my own implementation of FFD 
     data_for_frac_diff = df[[alpha_column]].copy().replace([np.inf, -np.inf], np.nan).dropna()
     data_for_frac_diff = data_for_frac_diff.rename({alpha_column: 'close'}, axis=1)
     frac_diff_series = frac_diff_ffd(data_for_frac_diff, coef_d)
