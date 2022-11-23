@@ -5,6 +5,15 @@ import torch
 import random
 from datetime import datetime
 
+def standardize(df, look_back):
+    #look into when 0 in values
+    x       = df.dropna()
+    x_bar   = df.rolling(look_back).mean()
+    z_std   = df.rolling(look_back).std() + 1e-10
+    z_score = (x - x_bar) / z_std
+    return z_score.fillna(method ='ffill').dropna()
+
+
 def pkl_save(name, var):
     with open(name, 'wb') as f:
         pickle.dump(var, f)
