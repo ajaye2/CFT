@@ -8,4 +8,4 @@ scikit_learn==0.24.2
 datapackage
 polygon-api-client
 matplotlib
-gpflow
+gpflow==2.2.1
