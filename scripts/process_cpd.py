@@ -49,15 +49,13 @@ def prep_data_for_cpd(file, folder_path):
     temp            = temp.set_index('date')
     
     return temp
-prep_data_for_cpd(filenames_day[0], stock_data_path_day).head()
-
-
+    
 
 files = filenames_day[:]
 cpd_args_day_short = [( prep_data_for_cpd(x, stock_data_path_day),  short_cpd_lookback_window_length, cpd_path_day  + x[:-4] + "_short.csv" ) for x in files]
 cpd_args_day_long  = [( prep_data_for_cpd(x, stock_data_path_day),  long_cpd_lookback_window_length,  cpd_path_day  + x[:-4] + "_long.csv"  ) for x in files]
 
-with Pool(48) as pool:
+with Pool() as pool:
     results = pool.starmap(run_module, cpd_args_day_short)
     results = pool.starmap(run_module, cpd_args_day_long)
 
