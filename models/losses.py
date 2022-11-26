@@ -51,7 +51,7 @@ def temporal_contrastive_loss(z1, z2):
 
 
 
-def quadratic_contrastive_loss(z1, f1, delta=0.1, type_sim='square'):
+def quadratic_contrastive_loss(z1, f1, delta=1, type_sim='square'):
     '''
         z1 is a batch containing the representations from the dilated conv net
         f1 is a batch containing the expert features 
@@ -64,7 +64,7 @@ def quadratic_contrastive_loss(z1, f1, delta=0.1, type_sim='square'):
     for i in range(B):  
         xi   = z1[i]
         fi   = f1[i]
-        for j in range(B): # TODO: confirm if algo is meant to iterate B**2 times and if norm(xi - xj) == norm (xj - xi)
+        for j in range(B): 
             xj   = z1[j]
             fj   = f1[j]
             loss += get_quad_loss_helper(xi, xj, fi, fj, dij_mu[i], max_diff_norm_of_feat, delta, type_sim)
@@ -75,7 +75,7 @@ def quadratic_contrastive_loss(z1, f1, delta=0.1, type_sim='square'):
 
 
 
-def expclr_loss(z1, f, temp=0.5, delta=0.1, type_sim='square'):
+def expclr_loss(z1, f, temp=1, delta=1, type_sim='square'):
     '''
         z1 is a batch containing the representations from the dilated conv net
         f1 is a batch containing the expert features 
@@ -92,25 +92,23 @@ def expclr_loss(z1, f, temp=0.5, delta=0.1, type_sim='square'):
     for i in range(B):  
         xi   = z1[i]
         fi   = f[i]
-        for j in range(i+1, B): 
+        for j in range( B): 
             xj  = z1[j]
             fj  = f[j]
 
             lij = get_quad_loss_helper(xi, xj, fi, fj, dij_mu[i], max_diff_norm_of_feat, delta, type_sim)
             lij = torch.exp(lij / temp)
-            lij /= B**2
+            # lij /= B**2
 
             loss += lij
-    # loss /= B**2
+    loss /= B**2
 
     loss = temp * torch.log( loss )
     return loss
     
-
-
-def get_quad_loss_helper(xi, xj, fi, fj, dij_mu, max_diff_norm_of_feat, delta, type_sim):
-        sij  = similarity_measure(fi, fj, max_diff_norm_of_feat, type=type_sim) # TODO: Should be fi and fj, not xi and xj
-        dij  = torch.norm(xi - xj) / dij_mu # TODO: Add explanation for dividing by mean in
+def get_quad_loss_helper(xi, xj, fi, fj, dij_mu, max_diff_norm_of_exp_feat, delta, type_sim):
+        sij  = similarity_measure(fi, fj, max_diff_norm_of_exp_feat, type=type_sim)
+        dij  = torch.norm(xi - xj) / dij_mu # TODO: Add explanation for dividing by mean 
         loss = ( (1-sij)*delta - dij ) ** 2
         return loss
 
@@ -125,7 +123,6 @@ def get_euclidean_mean(z1):
             dij = torch.norm(xi - xj)
             means[i]+=dij
         means[i] /= B
-    # mean /= B
     return means
 
 def similarity_measure(f1, f2, max_diff_norm, type='square', sigma=0.01):
@@ -148,8 +145,7 @@ def get_max_norm(f1):
 
     # TODO: Make get_max_norm more efficient
     for i in range(B):
-        for j in range( i+1, B ):
-            if i == j: continue
+        for j in range( B ):
             diff = f1[i] - f1[j]
             norm_diff = torch.norm(diff) 
             if max_diff < norm_diff:

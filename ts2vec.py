@@ -68,7 +68,7 @@ class TS2Vec:
         self.n_epochs = 0
         self.n_iters = 0
     
-    def fit(self, train_data, expert_features=None, n_epochs=None, n_iters=None, verbose=False, temperature=10, delta=0.1):
+    def fit(self, train_data, expert_features=None, n_epochs=None, n_iters=None, verbose=False, temperature=1, delta=1, loss_weight_scale=0.35, use_expclr_loss=False):
         ''' Training the TS2Vec model.
         
         Args:
@@ -175,18 +175,23 @@ class TS2Vec:
                     out2,
                     temporal_unit=self.temporal_unit
                 )
-                # loss = torch.tensor(0., device=out1.device)
 
+                loss *= loss_weight_scale
+                # loss = torch.tensor(0., device=out1.device)
                 if expert_features is not None:
                     _, (out1, _)  = self._rnn(out1) 
                     _, (out2, _)  = self._rnn(out2) 
 
                     out1 = out1.squeeze(0) #out1.view(out1.shape[1:])
                     out2 = out2.squeeze(0) #out2.view(out2.shape[1:])
+                    
+                    if use_expclr_loss:
+                        l1 = expclr_loss(out1, expf, temp=temperature, delta=delta) 
+                        l2 = expclr_loss(out2, expf, temp=temperature, delta=delta)
+                    else:
+                        l1 = quadratic_contrastive_loss(out1, expf, delta=1)
+                        l2 = quadratic_contrastive_loss(out2, expf, delta=1) 
 
-                    l1 = quadratic_contrastive_loss(out1, expf, delta=2) # expclr_loss(out1, expf, temp=temperature, delta=delta) #
-                    l2 = quadratic_contrastive_loss(out2, expf, delta=2) # expclr_loss(out2, expf, temp=temperature, delta=delta) #
-                    # print(l1, l2)
                     loss += l1 + l2
                     
                 loss.backward()
