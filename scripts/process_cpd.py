@@ -61,19 +61,19 @@ def prep_data_for_cpd(file, folder_path):
 #     results = pool.starmap(run_module, cpd_args_day_long)
 
 
-def file_should_be_processed(file):
-    file_path = Path(file)
-    if file.is_file():
-        df = pd.read_csv(file)
-        if 'hour' in file and df.shape[0] > 20000:
+def file_should_be_processed(path, file):
+    file_path = Path(path + file)
+    if file_path.is_file():
+        df = pd.read_csv(file_path)
+        if 'hour' in (path + file)  and df.shape[0] > 20000:
             return False
-        if 'day' in file and df.shape[0] > 2000:
+        if 'day' in (path + file)  and df.shape[0] > 2000:
             return False
     return True
 
 files = filenames_hour[:]
-cpd_args_hour_short = [( prep_data_for_cpd(x, stock_data_path_hour),  short_cpd_lookback_window_length, cpd_path_hour  + x[:-4] + "_short.csv"  ) for x in files if file_should_be_processed(x[:-4] + "_short.csv") ]
-cpd_args_hour_long  = [( prep_data_for_cpd(x, stock_data_path_hour),  short_cpd_lookback_window_length, cpd_path_hour  + x[:-4] + "_long.csv"   ) for x in files if file_should_be_processed(x[:-4] + "_long.csv")]
+cpd_args_hour_short = [( prep_data_for_cpd(x, stock_data_path_hour),  short_cpd_lookback_window_length, cpd_path_hour  + x[:-4] + "_short.csv"  ) for x in files if file_should_be_processed(cpd_path_hour, x[:-4] + "_short.csv") ]
+cpd_args_hour_long  = [( prep_data_for_cpd(x, stock_data_path_hour),  short_cpd_lookback_window_length, cpd_path_hour  + x[:-4] + "_long.csv"   ) for x in files if file_should_be_processed(cpd_path_hour, x[:-4] + "_long.csv")]
 
 with Pool() as pool:
     results = pool.starmap(run_module, cpd_args_hour_short)
