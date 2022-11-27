@@ -78,3 +78,6 @@ cpd_args_hour_long  = [( prep_data_for_cpd(x, stock_data_path_hour),  short_cpd_
 with Pool() as pool:
     results = pool.starmap(run_module, cpd_args_hour_short)
     results = pool.starmap(run_module, cpd_args_hour_long)
+
+    pool.close()
+    pool.join()
