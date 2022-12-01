@@ -75,7 +75,7 @@ files = filenames_hour[:]
 cpd_args_hour_short = [( prep_data_for_cpd(x, stock_data_path_hour),  short_cpd_lookback_window_length, cpd_path_hour  + x[:-4] + "_short.csv"  ) for x in files if file_should_be_processed(cpd_path_hour, x[:-4] + "_short.csv") ]
 cpd_args_hour_long  = [( prep_data_for_cpd(x, stock_data_path_hour),  short_cpd_lookback_window_length, cpd_path_hour  + x[:-4] + "_long.csv"   ) for x in files if file_should_be_processed(cpd_path_hour, x[:-4] + "_long.csv")]
 
-with Pool() as pool:
+with Pool(int(0.8 * os.cpu_count())) as pool:
     results = pool.starmap(run_module, cpd_args_hour_short)
     results = pool.starmap(run_module, cpd_args_hour_long)
 
