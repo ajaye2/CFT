@@ -184,14 +184,13 @@ class TS2Vec:
 
                     out1 = out1.squeeze(0) #out1.view(out1.shape[1:])
                     out2 = out2.squeeze(0) #out2.view(out2.shape[1:])
-                    
+
                     if use_expclr_loss:
                         l1 = expclr_loss(out1, expf, temp=temperature, delta=delta) 
                         l2 = expclr_loss(out2, expf, temp=temperature, delta=delta)
                     else:
-                        l1 = quadratic_contrastive_loss(out1, expf, delta=1)
-                        l2 = quadratic_contrastive_loss(out2, expf, delta=1) 
-
+                        l1 = quadratic_contrastive_loss(out1, expf, delta=delta)
+                        l2 = quadratic_contrastive_loss(out2, expf, delta=delta) 
                     loss += l1 + l2
                     
                 loss.backward()
@@ -232,6 +231,11 @@ class TS2Vec:
                 out.transpose(1, 2),
                 kernel_size = out.size(1),
             ).transpose(1, 2)
+
+        elif encoding_window == 'net_compression':
+            if slicing is not None:
+                out = out[:, slicing]
+            _, (out, _)  = self.rnn(out) 
             
         elif isinstance(encoding_window, int):
             out = F.max_pool1d(
@@ -352,10 +356,16 @@ class TS2Vec:
                             out.transpose(1, 2).contiguous(),
                             kernel_size = out.size(1),
                         ).squeeze(1)
+                    
+                    if encoding_window == 'net_compression':
+                        _, (out, _)  = self.rnn(out) 
+                        out = out.squeeze(0) 
                 else:
                     out = self._eval_with_pooling(x, mask, encoding_window=encoding_window)
                     if encoding_window == 'full_series':
                         out = out.squeeze(1)
+                    elif encoding_window == 'net_compression':
+                        out = out.squeeze(0) 
                         
                 output.append(out)
                 
