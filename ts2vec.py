@@ -53,11 +53,11 @@ class TS2Vec:
         self.net  = torch.optim.swa_utils.AveragedModel(self._net)
         self.net.update_parameters(self._net)
 
-        self._projection_head = nn.Linear(output_dims, output_dims) ## TODO: Add parameters for more flexibilty 
+        self._projection_head = nn.Linear(output_dims, output_dims).to(self.device) ## TODO: Add parameters for more flexibilty 
         self.projection_head  = torch.optim.swa_utils.AveragedModel(self._projection_head)
         self.projection_head.update_parameters(self._projection_head)
 
-        self._rnn = nn.LSTM(output_dims, output_dims, batch_first=True) ## TODO: Add parameters for more flexibilty 
+        self._rnn = nn.LSTM(output_dims, output_dims, batch_first=True).to(self.device) ## TODO: Add parameters for more flexibilty 
         self.rnn  = torch.optim.swa_utils.AveragedModel(self._rnn)      ## TODO: Figure out what this does
         self.rnn.update_parameters(self._rnn)
         
@@ -68,7 +68,7 @@ class TS2Vec:
         self.n_epochs = 0
         self.n_iters = 0
     
-    def fit(self, train_data, expert_features=None, n_epochs=None, n_iters=None, verbose=False, temperature=10, delta=0.1, use_expclr_loss=False):
+    def fit(self, train_data, expert_features=None, n_epochs=None, n_iters=None, verbose=False, temperature=1, delta=1, loss_weight_scale=0.35, use_expclr_loss=False):
         ''' Training the TS2Vec model.
         
         Args:
@@ -175,8 +175,9 @@ class TS2Vec:
                     out2,
                     temporal_unit=self.temporal_unit
                 )
-                # loss = torch.tensor(0., device=out1.device)
 
+                loss *= loss_weight_scale
+                # loss = torch.tensor(0., device=out1.device)
                 if expert_features is not None:
                     _, (out1, _)  = self._rnn(out1) 
                     _, (out2, _)  = self._rnn(out2) 
@@ -357,6 +358,7 @@ class TS2Vec:
                         ).squeeze(1)
                     
                     if encoding_window == 'net_compression':
+                        self.rnn.flatten_parameters()
                         _, (out, _)  = self.rnn(out) 
                         out = out.squeeze(0) 
                 else:
@@ -364,6 +366,7 @@ class TS2Vec:
                     if encoding_window == 'full_series':
                         out = out.squeeze(1)
                     elif encoding_window == 'net_compression':
+                        self.rnn.flatten_parameters()
                         out = out.squeeze(0) 
                         
                 output.append(out)
