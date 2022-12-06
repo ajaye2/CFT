@@ -68,7 +68,7 @@ class TS2Vec:
         self.n_epochs = 0
         self.n_iters = 0
     
-    def fit(self, train_data, expert_features=None, n_epochs=None, n_iters=None, verbose=False, temperature=1, delta=1, loss_weight_scale=0.35, use_expclr_loss=False):
+    def fit(self, train_data, expert_features=None, n_epochs=None, n_iters=None, verbose=False, temperature=10, delta=0.1, use_expclr_loss=False):
         ''' Training the TS2Vec model.
         
         Args:
@@ -175,9 +175,8 @@ class TS2Vec:
                     out2,
                     temporal_unit=self.temporal_unit
                 )
-
-                loss *= loss_weight_scale
                 # loss = torch.tensor(0., device=out1.device)
+
                 if expert_features is not None:
                     _, (out1, _)  = self._rnn(out1) 
                     _, (out2, _)  = self._rnn(out2) 
