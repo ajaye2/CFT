@@ -31,7 +31,7 @@ def get_data(base_path, timeframe, lookback_window=7, standardize_lookback_windo
     cols_to_perform_ffd = ['open', 'high', 'low', 'close', 'vwap']
 
     data_dict = {}
- 
+
     for file in tqdm(filenames[:]):
         df                  = pd.read_csv(mypath + file).set_index('timestamp')[cols_to_perform_ffd]
         df_ffd              = pd.read_csv(ffd_path + file).set_index('timestamp')
