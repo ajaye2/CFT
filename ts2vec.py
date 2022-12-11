@@ -109,7 +109,7 @@ class TS2Vec:
             expert_features = expert_features[idx]
             idx             = ~np.isnan(expert_features).all(axis=1)
 
-            train_data = train_data[idx]
+            train_data      = train_data[idx]
             expert_features = expert_features[idx]
 
         
@@ -293,7 +293,11 @@ class TS2Vec:
         n_samples, ts_l, _ = data.shape
 
         org_training = self.net.training
+        org_training_projection_head = self.projection_head.training
+        org_training_rnn = self.rnn.training
         self.net.eval()
+        self.projection_head.eval()
+        self.rnn.eval()
         
         dataset = TensorDataset(torch.from_numpy(data).to(torch.float))
         loader = DataLoader(dataset, batch_size=batch_size)
@@ -358,7 +362,7 @@ class TS2Vec:
                         ).squeeze(1)
                     
                     if encoding_window == 'net_compression':
-                        self.rnn.flatten_parameters()
+                        # self.rnn.flatten_parameters()
                         _, (out, _)  = self.rnn(out) 
                         out = out.squeeze(0) 
                 else:
@@ -366,7 +370,7 @@ class TS2Vec:
                     if encoding_window == 'full_series':
                         out = out.squeeze(1)
                     elif encoding_window == 'net_compression':
-                        self.rnn.flatten_parameters()
+                        # self.rnn.flatten_parameters()
                         out = out.squeeze(0) 
                         
                 output.append(out)
@@ -374,6 +378,8 @@ class TS2Vec:
             output = torch.cat(output, dim=0)
             
         self.net.train(org_training)
+        self.projection_head.train(org_training_projection_head)
+        self.rnn.train(org_training_rnn)
         return output.numpy()
     
     def save(self, fn):
@@ -382,7 +388,12 @@ class TS2Vec:
         Args:
             fn (str): filename.
         '''
-        torch.save(self.net.state_dict(), fn)
+        if fn[-4:] == '.pkl':
+            fn = fn[:-4]
+
+        torch.save(self.net.state_dict(), fn + "_net.pkl")
+        torch.save(self.projection_head.state_dict(), fn + "_projection_head.pkl")
+        torch.save(self.rnn.state_dict(), fn + "_rnn.pkl")
     
     def load(self, fn):
         ''' Load the model from a file.
@@ -390,6 +401,15 @@ class TS2Vec:
         Args:
             fn (str): filename.
         '''
-        state_dict = torch.load(fn, map_location=self.device)
-        self.net.load_state_dict(state_dict)
+        if fn[-4:] == '.pkl':
+            fn = fn[:-4]
+
+        net_state_dict = torch.load(fn + "_net.pkl", map_location=self.device)
+        self.net.load_state_dict(net_state_dict)
+
+        projection_head_state_dict = torch.load(fn + "_projection_head.pkl", map_location=self.device)
+        self.projection_head.load_state_dict(projection_head_state_dict)
+
+        rnn_state_dict = torch.load(fn + "_rnn.pkl", map_location=self.device)
+        self.rnn.load_state_dict(rnn_state_dict)
     
