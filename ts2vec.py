@@ -8,6 +8,7 @@ from models.losses import hierarchical_contrastive_loss, expclr_loss, quadratic_
 from utils import take_per_row, split_with_nan, centerize_vary_length_series, torch_pad_nan
 import math
 
+
 class TS2Vec:
     '''The TS2Vec model'''
     
@@ -23,7 +24,8 @@ class TS2Vec:
         max_train_length=None,
         temporal_unit=0,
         after_iter_callback=None,
-        after_epoch_callback=None
+        after_epoch_callback=None, 
+        use_projection_head=True
     ):
         ''' Initialize a TS2Vec model.
         
@@ -44,10 +46,13 @@ class TS2Vec:
         super().__init__()
         # self.device = device
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        print("Device is ", self.device)
+        
         self.lr = lr
         self.batch_size = batch_size
         self.max_train_length = max_train_length
         self.temporal_unit = temporal_unit
+        self.use_projection_head = use_projection_head
         
         self._net = TSEncoder(input_dims=input_dims, output_dims=output_dims, hidden_dims=hidden_dims, depth=depth).to(self.device)
         self.net  = torch.optim.swa_utils.AveragedModel(self._net)
