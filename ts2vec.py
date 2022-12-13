@@ -182,7 +182,7 @@ class TS2Vec:
                 )
 
                 loss *= loss_weight_scale
-                # loss = torch.tensor(0., device=out1.device)
+ 
                 if expert_features is not None:
                     _, (out1, _)  = self._rnn(out1) 
                     _, (out2, _)  = self._rnn(out2) 

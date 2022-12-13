@@ -49,11 +49,11 @@ def get_data(base_path, timeframe, lookback_window=7, standardize_lookback_windo
         meta_features         = pd.concat([df_ffd, df_cpd_short, df_cpd_long], axis=1).sort_index().dropna()
         
         tasks                                 = pd.DataFrame(index=df.index)
-        tasks['one_day_price_pred']           = ( df.close - df.close.shift(-1) )
-        tasks['two_day_price_pred']           = ( df.close - df.close.shift(-2) )
-        tasks['three_day_price_pred']         = ( df.close - df.close.shift(-3) )
-        tasks['four_day_price_pred']          = ( df.close - df.close.shift(-4) )
-        tasks['five_day_price_pred']          = ( df.close - df.close.shift(-5) )
+        tasks['one_day_price_pred']           = ( df.close - df.close.shift(-1) ) / df.close.shift(-1)
+        tasks['two_day_price_pred']           = ( df.close - df.close.shift(-2) ) / df.close.shift(-2)
+        tasks['three_day_price_pred']         = ( df.close - df.close.shift(-3) ) / df.close.shift(-3)
+        tasks['four_day_price_pred']          = ( df.close - df.close.shift(-4) ) / df.close.shift(-4)
+        tasks['five_day_price_pred']          = ( df.close - df.close.shift(-5) ) / df.close.shift(-5)
 
         ### Check if volatilty is being created correctly
         tasks['one_week_vol_pred']            = ( df.close.rolling(5).std() - df.close.rolling(5).std().shift(-1) )
@@ -64,13 +64,15 @@ def get_data(base_path, timeframe, lookback_window=7, standardize_lookback_windo
 
         # tasks.dropna(inplace=True)
 
+        df_raw_price    = df.copy()
+
         # Experiment between this and using raw values 
         df                  = standardize(df,     look_back=standardize_lookback_window)
         meta_features       = standardize(meta_features, look_back=standardize_lookback_window)
 
         idx                 = meta_features.index.intersection(df.index).intersection(tasks.index)
         df, meta_features,tasks    = df.loc[idx], meta_features.loc[idx], tasks.loc[idx]
-
+        df_raw_price= df_raw_price.loc[idx]
 
         X_data_array, X_data_dict                = [], {}       
         EXP_FEAT_data_array                      = []
@@ -84,15 +86,18 @@ def get_data(base_path, timeframe, lookback_window=7, standardize_lookback_windo
         
 
             assert meta_features.iloc[i-1].name == df.iloc[i - lookback_window:i].iloc[-1].name 
-
         # X_data_array        = np.array( X_data_array )
         # EXP_FEAT_data_array = np.array( EXP_FEAT_data_array )
 
-        data_dict[file[:-4]]                  = {}
-        data_dict[file[:-4]]['X_DATA']        = X_data_array
-        data_dict[file[:-4]]['EXP_FEAT_DATA'] = EXP_FEAT_data_array
-        data_dict[file[:-4]]['Y_DATA']        = tasks 
-        data_dict[file[:-4]]['X_DATA_DICT']   = X_data_dict 
+        data_dict[file[:-4]]                      = {}
+        data_dict[file[:-4]]['X_DATA']            = X_data_array
+        data_dict[file[:-4]]['EXP_FEAT_DATA']     = EXP_FEAT_data_array
+        data_dict[file[:-4]]['Y_DATA']            = tasks 
+        data_dict[file[:-4]]['X_DATA_DICT']       = X_data_dict 
+        data_dict[file[:-4]]['RAW_TIME_SERIES']   = df_raw_price
+        data_dict[file[:-4]]['RAW_TIME_SERIES_STD']   = df 
+        
+        data_dict[file[:-4]]['RAW_EXP_FEAT']      = meta_features 
         # print(file, X_data_array.shape, EXP_FEAT_data_array.shape)
 
 
