@@ -17,7 +17,7 @@ def save_checkpoint_callback(
     def callback(model, loss):
         n = model.n_epochs if unit == 'epoch' else model.n_iters
         if n % save_every == 0:
-            model.save(f'{run_dir}/model_{n}.pkl')
+            model.save(run_dir + '/model_' + str(n) + '.pkl')
     return callback
 
 
